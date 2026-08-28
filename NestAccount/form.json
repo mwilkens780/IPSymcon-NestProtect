@@ -11,7 +11,7 @@
       "items": [
         {
           "type": "Label",
-          "caption": "Im Browser auf home.nest.com mit dem Nest-Konto einloggen (NICHT ueber Google) -> Entwicklertools (F12) -> Netzwerk-Tab -> 'Preserve log' anhaken -> nach 'session' filtern -> Seite neu laden bzw. einloggen. Bei der Anfrage an home.nest.com/session im Antwort-Body (Response) das Feld 'access_token' kopieren."
+          "caption": "1. Auf home.nest.com einloggen (mit dem Nest-Konto, nicht ueber Google). 2. Neuen Tab oeffnen und direkt zu home.nest.com/session navigieren. 3. Im angezeigten Text 'access_token' suchen und NUR den Wert zwischen den Anfuehrungszeichen kopieren (langer String, beginnt meist mit 'b'). 4. Nicht bei home.nest.com ausloggen -- das macht den Token sofort ungueltig, einfach den Tab schliessen."
         },
         {
           "type": "PasswordTextBox",
@@ -27,7 +27,11 @@
       "items": [
         {
           "type": "Label",
-          "caption": "Im Browser auf home.nest.com einloggen -> Entwicklertools (F12) -> Netzwerk-Tab -> 'Preserve log' anhaken -> nach 'issue_token' filtern -> Seite neu laden. Bei der gefundenen Anfrage (an accounts.google.com) die komplette Anfrage-URL als 'Issue Token' eintragen, und den Wert des Anfrage-Headers 'cookie' als 'Cookies'."
+          "caption": "WICHTIG: Nicht Chrome/Edge verwenden -- Google bindet die Anmeldung dort an eine hardwaregebundene Sicherheits-Session, die nach wenigen Stunden ungueltig wird. Firefox oder Safari verwenden, und dort bei home.nest.com den Tracking-Schutz (Firefox: Schild-Symbol) deaktivieren."
+        },
+        {
+          "type": "Label",
+          "caption": "1. Entwicklertools (F12) -> Network-Tab -> 'Preserve Log' anhaken. 2. Filter auf 'issueToken' setzen -> auf home.nest.com 'Sign in with Google' klicken und einloggen. 3. Die Anfrage 'iframerpc' anklicken -> im Headers-Tab die komplette Request-URL kopieren = 'Issue Token'. 4. Filter auf 'oauth2/iframe' aendern -> die LETZTE 'iframe'-Anfrage anklicken -> bei Request Headers den Wert von 'cookie' kopieren = 'Cookies'. 5. Nicht ausloggen, nur den Tab schliessen."
         },
         {
           "type": "PasswordTextBox",

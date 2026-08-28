@@ -15,19 +15,23 @@ https://github.com/mwilkens780/IPSymcon-NestProtect
 
 ### 1. Nest-Konto-Instanz anlegen
 
-Eine **NestAccount**-Instanz anlegen (eine pro Nest-Konto). Je nachdem, ob das Konto zu einem Google-Konto migriert wurde oder nicht, nur **einen** der beiden folgenden Wege nutzen -- beide brauchen einmalig manuell aus dem Browser geholte Zugangsdaten. In beiden Fällen: Entwicklertools des Browsers öffnen (Chrome/Edge: Taste **F12**), Reiter **"Network"/"Netzwerk"**, Checkbox **"Preserve log"/"Log beibehalten"** anhaken (sonst verschwindet die gesuchte Anfrage bei der Weiterleitung während des Logins), dann erst einloggen.
+Eine **NestAccount**-Instanz anlegen (eine pro Nest-Konto). Je nachdem, ob das Konto zu einem Google-Konto migriert wurde oder nicht, nur **einen** der beiden folgenden Wege nutzen -- beide brauchen einmalig manuell aus dem Browser geholte Zugangsdaten (Anleitung übernommen aus dem aktiv gepflegten [`nest_legacy`](https://github.com/tronikos/nest_legacy)-Projekt, das beide Kontotypen unterstützt).
 
-**Legacy-Konto (nicht zu Google migriert):**
+**Legacy-Konto (nicht zu Google migriert) -- einfacher Weg, kein DevTools nötig:**
 1. Auf [home.nest.com](https://home.nest.com) mit dem Nest-Konto einloggen (nicht über Google).
-2. Im Netzwerk-Tab nach `session` filtern.
-3. Bei der Anfrage an `home.nest.com/session` im **Antwort-Body (Response)** das Feld `access_token` kopieren → als `Access Token` eintragen.
+2. **Neuen Tab** öffnen und direkt zu `https://home.nest.com/session` navigieren.
+3. Im angezeigten Text `"access_token": "..."` suchen und **nur den Wert zwischen den Anführungszeichen** kopieren (langer String, beginnt meist mit `b`) → als `Access Token` eintragen.
+4. **Nicht** bei home.nest.com ausloggen -- das macht den Token sofort ungültig. Einfach den Tab schließen.
 
 **Google-Konto (zu Google migriert):**
-1. Auf [home.nest.com](https://home.nest.com) einloggen.
-2. Im Netzwerk-Tab nach `issue_token` filtern.
-3. Die gefundene Anfrage an `accounts.google.com` öffnen:
-   - Die **komplette Anfrage-URL** kopieren → als `Issue Token` eintragen.
-   - Den Wert des Anfrage-Headers `cookie` kopieren → als `Cookies` eintragen.
+
+⚠️ **Nicht Chrome oder Edge verwenden** -- Google bindet die Anmeldung dort an eine hardwaregebundene Sicherheits-Session, die nach wenigen Stunden (oder beim IPS-Neustart) wieder ungültig wird. **Firefox oder Safari** verwenden, und bei home.nest.com den Tracking-Schutz deaktivieren (Firefox: Schild-Symbol in der Adressleiste).
+
+1. Entwicklertools öffnen (**F12**) → Reiter **Network** → Checkbox **"Preserve Log"** anhaken.
+2. Filter auf `issueToken` setzen → auf home.nest.com "Sign in with Google" klicken und einloggen.
+3. Die Anfrage `iframerpc` anklicken → im Headers-Tab die komplette **Request-URL** kopieren → als `Issue Token` eintragen.
+4. Filter auf `oauth2/iframe` ändern → die **letzte** `iframe`-Anfrage anklicken → bei Request Headers den Wert von `cookie` kopieren → als `Cookies` eintragen.
+5. **Nicht** ausloggen, nur den Tab schließen.
 
 Danach über den Button "Verbindung testen / Geräte auflisten" prüfen, ob die Anmeldung funktioniert -- die gefundenen Geräte werden dort mit Seriennummer und Modell aufgelistet.
 
