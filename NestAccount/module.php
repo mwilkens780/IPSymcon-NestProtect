@@ -135,7 +135,13 @@ class NestAccount extends IPSModule
         ]);
         $session = json_decode($resp['body'], true);
         if ($resp['status'] !== 200 || !isset($session['access_token'], $session['userid'])) {
-            $this->LogMessage('NestAccount: Legacy-Session-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . '): ' . $this->truncate($resp['body']), KL_ERROR);
+            // Redacted preview (length + first/last few chars) so a garbled
+            // or accidentally-empty token is visible in the log without
+            // ever writing the actual secret to it.
+            $preview = strlen($token) > 12
+                ? substr($token, 0, 6) . '...' . substr($token, -4) . ' (Länge ' . strlen($token) . ')'
+                : '(zu kurz: Länge ' . strlen($token) . ')';
+            $this->LogMessage('NestAccount: Legacy-Session-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . '), Token ' . $preview . ': ' . $this->truncate($resp['body']), KL_ERROR);
             $this->SetStatus(201);
             return false;
         }
@@ -285,15 +291,26 @@ class NestAccount extends IPSModule
         return strlen($body) > $length ? substr($body, 0, $length) . '...' : $body;
     }
 
-    /** @return array{status:int,body:string} */
-    private function httpRequest(string $url, string $method, array $headers, ?string $body = null): array
+    /**
+     * PHP's http:// stream wrapper follows redirects by default but does
+     * NOT resend custom headers (like Authorization) on the redirected
+     * request -- if Nest's edge ever 30x-redirects, the token would
+     * silently vanish before reaching the real endpoint, and every
+     * response would look identical to "no credentials at all" regardless
+     * of which token was used. Redirects are followed manually here
+     * instead, so the same headers go out on every hop.
+     *
+     * @return array{status:int,body:string}
+     */
+    private function httpRequest(string $url, string $method, array $headers, ?string $body = null, int $redirectsLeft = 5): array
     {
         $options = [
             'http' => [
-                'method'        => $method,
-                'header'        => implode("\r\n", $headers),
-                'ignore_errors' => true,
-                'timeout'       => 15,
+                'method'          => $method,
+                'header'          => implode("\r\n", $headers),
+                'ignore_errors'   => true,
+                'timeout'         => 15,
+                'follow_location' => 0,
             ],
         ];
         if ($body !== null) {
@@ -304,10 +321,33 @@ class NestAccount extends IPSModule
         $result  = @file_get_contents($url, false, $context);
 
         $status = 0;
-        if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) {
-            $status = (int) $m[1];
+        $location = null;
+        if (isset($http_response_header) && is_array($http_response_header)) {
+            if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) {
+                $status = (int) $m[1];
+            }
+            foreach ($http_response_header as $headerLine) {
+                if (stripos($headerLine, 'Location:') === 0) {
+                    $location = trim(substr($headerLine, strlen('Location:')));
+                }
+            }
+        }
+
+        if ($status >= 300 && $status < 400 && $location !== null && $redirectsLeft > 0) {
+            $nextUrl = (parse_url($location, PHP_URL_SCHEME) !== null) ? $location : $this->resolveUrl($url, $location);
+            return $this->httpRequest($nextUrl, $method, $headers, $body, $redirectsLeft - 1);
         }
 
         return ['status' => $status, 'body' => $result === false ? '' : $result];
+    }
+
+    /** Resolves a relative Location header against the URL it was returned for. */
+    private function resolveUrl(string $baseUrl, string $location): string
+    {
+        $base = parse_url($baseUrl);
+        if ($location !== '' && $location[0] === '/') {
+            return $base['scheme'] . '://' . $base['host'] . (isset($base['port']) ? ':' . $base['port'] : '') . $location;
+        }
+        return rtrim(dirname($baseUrl), '/') . '/' . $location;
     }
 }
