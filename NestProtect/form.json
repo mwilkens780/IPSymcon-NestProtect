@@ -1,0 +1,39 @@
+{
+  "elements": [
+    {
+      "type": "SelectInstance",
+      "name": "account_instance",
+      "caption": "Nest-Konto-Instanz",
+      "validModules": ["{9B9EE425-10D1-4B1A-AB27-628B74B9D6ED}"]
+    },
+    {
+      "type": "ValidationTextBox",
+      "name": "serial_number",
+      "caption": "Seriennummer"
+    },
+    {
+      "type": "Label",
+      "caption": "Die Seriennummer über den Button 'Verbindung testen / Geräte auflisten' in der Konto-Instanz ermitteln -- dort werden alle gefundenen Nest Protect Geräte mit Seriennummer und Modell aufgelistet."
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "update_interval",
+      "caption": "Aktualisierungsintervall (Sekunden)",
+      "minimum": 30,
+      "suffix": "s"
+    }
+  ],
+  "actions": [
+    {
+      "type": "Button",
+      "caption": "Jetzt aktualisieren",
+      "onClick": "NEST_Refresh($id);"
+    }
+  ],
+  "status": [
+    { "code": 102, "icon": "active",   "caption": "Aktiv" },
+    { "code": 104, "icon": "inactive", "caption": "Seriennummer nicht gefunden -- Konto-Instanz prüfen" },
+    { "code": 200, "icon": "error",    "caption": "Fehler – Details im IPS-Log" },
+    { "code": 201, "icon": "inactive", "caption": "Nicht konfiguriert -- Konto-Instanz und Seriennummer setzen" }
+  ]
+}

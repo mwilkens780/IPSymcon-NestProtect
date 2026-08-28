@@ -1,0 +1,45 @@
+{
+  "elements": [
+    {
+      "type": "Label",
+      "caption": "Google bietet fuer Nest Protect keine offizielle API an. Diese Instanz nutzt die gleiche inoffizielle, Cookie-basierte Anmeldung wie die bekannten Home-Assistant-Projekte (ha-nest-protect / nest_legacy)."
+    },
+    {
+      "type": "Label",
+      "caption": "So kommst Du an issue_token und cookies: Im Browser auf home.nest.com einloggen -> Entwicklertools -> Netzwerk-Tab -> nach 'issue_token' filtern -> Seite neu laden. Bei der gefundenen Anfrage (an accounts.google.com) die komplette Anfrage-URL als 'Issue Token' unten eintragen, und den Wert des Anfrage-Headers 'cookie' als 'Cookies'."
+    },
+    {
+      "type": "PasswordTextBox",
+      "name": "issue_token",
+      "caption": "Issue Token (komplette URL)"
+    },
+    {
+      "type": "PasswordTextBox",
+      "name": "cookies",
+      "caption": "Cookies"
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "update_interval",
+      "caption": "Aktualisierungsintervall (Sekunden)",
+      "minimum": 60,
+      "suffix": "s"
+    },
+    {
+      "type": "Label",
+      "caption": "Bleibt gueltig, bis Du Dich im Browser ausloggst oder das Passwort aenderst -- dann muessen issue_token/cookies hier neu eingetragen werden."
+    }
+  ],
+  "actions": [
+    {
+      "type": "Button",
+      "caption": "Verbindung testen / Geräte auflisten",
+      "onClick": "echo NEST_TestConnection($id);"
+    }
+  ],
+  "status": [
+    { "code": 102, "icon": "active",   "caption": "Aktiv" },
+    { "code": 200, "icon": "error",    "caption": "Fehler – Details im IPS-Log" },
+    { "code": 201, "icon": "inactive", "caption": "Nicht konfiguriert oder Anmeldung fehlgeschlagen" }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+    "id": "{8A2725A7-390A-4F9A-A9E9-A18CA10E537D}",
+    "name": "Nest Protect",
+    "type": 3,
+    "vendor": "Martin Wilkens",
+    "aliases": [],
+    "dependencies": [],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "NEST"
+}
