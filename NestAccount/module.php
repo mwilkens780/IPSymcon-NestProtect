@@ -115,7 +115,11 @@ class NestAccount extends IPSModule
      */
     private function authenticate(): bool
     {
-        $legacyToken = $this->ReadPropertyString('access_token');
+        // Trim defensively: a value copied out of browser DevTools very
+        // easily picks up a trailing newline or surrounding whitespace,
+        // which silently breaks the Authorization header and makes Nest's
+        // API respond as if no credentials were sent at all.
+        $legacyToken = trim($this->ReadPropertyString('access_token'));
         if ($legacyToken !== '') {
             return $this->authenticateLegacy($legacyToken);
         }
@@ -142,8 +146,8 @@ class NestAccount extends IPSModule
     /** Google-linked Nest account: cookies -> Google OAuth token -> Nest JWT -> /session. */
     private function authenticateGoogle(): bool
     {
-        $issueToken = $this->ReadPropertyString('issue_token');
-        $cookies    = $this->ReadPropertyString('cookies');
+        $issueToken = trim($this->ReadPropertyString('issue_token'));
+        $cookies    = trim($this->ReadPropertyString('cookies'));
         if ($issueToken === '' || $cookies === '') {
             $this->SetStatus(201);
             return false;
