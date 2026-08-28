@@ -12,6 +12,12 @@ declare(strict_types=1);
  */
 class NestAccount extends IPSModule
 {
+    // The reference clients (ha-nest-protect/nest_legacy) send this on every
+    // request via their HTTP session defaults; Nest's edge appears to reject
+    // requests with no User-Agent at all (HTTP 400), so every call here must
+    // set it explicitly since PHP's stream wrapper has no per-session default.
+    private const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36';
+
     public function Create(): void
     {
         parent::Create();
@@ -121,10 +127,11 @@ class NestAccount extends IPSModule
     {
         $resp = $this->httpRequest('https://home.nest.com/session', 'GET', [
             'Authorization: Basic ' . $token,
+            'User-Agent: ' . self::USER_AGENT,
         ]);
         $session = json_decode($resp['body'], true);
         if ($resp['status'] !== 200 || !isset($session['access_token'], $session['userid'])) {
-            $this->LogMessage('NestAccount: Legacy-Session-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . ') -- access_token vermutlich abgelaufen, bitte im Browser neu aus home.nest.com holen.', KL_ERROR);
+            $this->LogMessage('NestAccount: Legacy-Session-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . '): ' . $this->truncate($resp['body']), KL_ERROR);
             $this->SetStatus(201);
             return false;
         }
@@ -144,14 +151,14 @@ class NestAccount extends IPSModule
 
         $resp = $this->httpRequest($issueToken, 'GET', [
             'Sec-Fetch-Mode: cors',
-            'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36',
+            'User-Agent: ' . self::USER_AGENT,
             'X-Requested-With: XmlHttpRequest',
             'Referer: https://accounts.google.com/o/oauth2/iframe',
             'Cookie: ' . $cookies,
         ]);
         $google = json_decode($resp['body'], true);
         if ($resp['status'] !== 200 || !isset($google['access_token'])) {
-            $this->LogMessage('NestAccount: Google-Anmeldung fehlgeschlagen (HTTP ' . $resp['status'] . ') -- issue_token/cookies sind vermutlich abgelaufen, bitte im Browser neu aus home.nest.com holen.', KL_ERROR);
+            $this->LogMessage('NestAccount: Google-Anmeldung fehlgeschlagen (HTTP ' . $resp['status'] . '): ' . $this->truncate($resp['body']), KL_ERROR);
             $this->SetStatus(201);
             return false;
         }
@@ -160,6 +167,7 @@ class NestAccount extends IPSModule
         $resp = $this->httpRequest('https://nestauthproxyservice-pa.googleapis.com/v1/issue_jwt', 'POST', [
             'Authorization: Bearer ' . $googleAccessToken,
             'Content-Type: application/x-www-form-urlencoded',
+            'User-Agent: ' . self::USER_AGENT,
         ], http_build_query([
             'embed_google_oauth_access_token' => 'true',
             'expire_after'                    => '3600s',
@@ -168,17 +176,18 @@ class NestAccount extends IPSModule
         ]));
         $jwtData = json_decode($resp['body'], true);
         if ($resp['status'] !== 200 || !isset($jwtData['jwt'])) {
-            $this->LogMessage('NestAccount: Nest-JWT-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . ')', KL_ERROR);
+            $this->LogMessage('NestAccount: Nest-JWT-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . '): ' . $this->truncate($resp['body']), KL_ERROR);
             $this->SetStatus(201);
             return false;
         }
 
         $resp = $this->httpRequest('https://home.nest.com/session', 'GET', [
             'Authorization: Basic ' . $jwtData['jwt'],
+            'User-Agent: ' . self::USER_AGENT,
         ]);
         $session = json_decode($resp['body'], true);
         if ($resp['status'] !== 200 || !isset($session['access_token'], $session['userid'])) {
-            $this->LogMessage('NestAccount: Nest-Session-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . ')', KL_ERROR);
+            $this->LogMessage('NestAccount: Nest-Session-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . '): ' . $this->truncate($resp['body']), KL_ERROR);
             $this->SetStatus(201);
             return false;
         }
@@ -231,6 +240,7 @@ class NestAccount extends IPSModule
                 'X-nl-user-id: ' . $userId,
                 'X-nl-protocol-version: 1',
                 'Content-Type: application/json',
+                'User-Agent: ' . self::USER_AGENT,
             ],
             (string) $body
         );
@@ -244,7 +254,7 @@ class NestAccount extends IPSModule
 
         $data = json_decode($resp['body'], true);
         if ($resp['status'] !== 200 || !isset($data['updated_buckets'])) {
-            $this->LogMessage('NestAccount: Geräteabfrage fehlgeschlagen (HTTP ' . $resp['status'] . ')', KL_ERROR);
+            $this->LogMessage('NestAccount: Geräteabfrage fehlgeschlagen (HTTP ' . $resp['status'] . '): ' . $this->truncate($resp['body']), KL_ERROR);
             return false;
         }
 
@@ -262,6 +272,13 @@ class NestAccount extends IPSModule
 
         $this->WriteAttributeString('TopazBucketsJson', json_encode($topaz));
         return true;
+    }
+
+    /** Keeps error log lines short even when Nest returns a large HTML error page instead of JSON. */
+    private function truncate(string $body, int $length = 300): string
+    {
+        $body = trim($body);
+        return strlen($body) > $length ? substr($body, 0, $length) . '...' : $body;
     }
 
     /** @return array{status:int,body:string} */

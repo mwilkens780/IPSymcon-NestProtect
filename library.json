@@ -3,8 +3,8 @@
     "author": "Martin Wilkens",
     "name": "Nest Protect",
     "description": "Bindet Google Nest Protect Rauch-/CO-Melder in IP-Symcon ein, da diese von Googles offizieller Smart Device Management API nicht unterstuetzt werden. Nutzt die gleiche inoffizielle Nest-API wie die Home-Assistant-Projekte ha-nest-protect/nest_legacy, sowohl fuer Legacy- (Access Token) als auch Google-migrierte (issue_token/cookies) Nest-Konten. NestAccount-Instanz haelt die Anmeldung und fragt periodisch ab, NestProtect-Instanzen (eine je Melder) lesen ihre Werte darueber aus: Rauch/CO/Hitze-Alarmstatus, Batterie, Netzstrom, Stummschaltung, letzter Selbsttest, Austauschdatum.",
-    "version": "1.1",
-    "build": 2,
-    "date": 1787922000,
+    "version": "1.2",
+    "build": 3,
+    "date": 1787925600,
     "url": "https://github.com/mwilkens780/IPSymcon-NestProtect"
 }
