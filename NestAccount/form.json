@@ -11,7 +11,7 @@
       "items": [
         {
           "type": "Label",
-          "caption": "1. Auf home.nest.com einloggen (mit dem Nest-Konto, nicht ueber Google). 2. Neuen Tab oeffnen und direkt zu home.nest.com/session navigieren. 3. Im angezeigten Text 'access_token' suchen und NUR den Wert zwischen den Anfuehrungszeichen kopieren (langer String, beginnt meist mit 'b'). 4. Nicht bei home.nest.com ausloggen -- das macht den Token sofort ungueltig, einfach den Tab schliessen."
+          "caption": "1. Auf home.nest.com einloggen (mit dem Nest-Konto, nicht ueber Google). 2. Neuen Tab oeffnen und direkt zu home.nest.com/session navigieren. 3. Im angezeigten Text 'access_token' suchen -- der Name kommt MEHRFACH vor, das RICHTIGE Feld ist das ERSTE/OBERSTE (ganz am Anfang, noch vor verschachtelten Bereichen wie 'weave'). NUR den Wert zwischen den Anfuehrungszeichen kopieren, nicht Feldname/Komma/Nachbarwerte -- er beginnt mit 'b' und ist deutlich kuerzer als 100 Zeichen. Ein Wert, der NICHT mit 'b' beginnt oder sehr lang ist (200+ Zeichen, endet oft auf '='), ist das falsche, verschachtelte Feld. 4. Nicht bei home.nest.com ausloggen -- das macht den Token sofort ungueltig, einfach den Tab schliessen."
         },
         {
           "type": "PasswordTextBox",

@@ -20,7 +20,7 @@ Eine **NestAccount**-Instanz anlegen (eine pro Nest-Konto). Je nachdem, ob das K
 **Legacy-Konto (nicht zu Google migriert) -- einfacher Weg, kein DevTools nötig:**
 1. Auf [home.nest.com](https://home.nest.com) mit dem Nest-Konto einloggen (nicht über Google).
 2. **Neuen Tab** öffnen und direkt zu `https://home.nest.com/session` navigieren.
-3. Im angezeigten Text `"access_token": "..."` suchen und **nur den Wert zwischen den Anführungszeichen** kopieren (langer String, beginnt meist mit `b`) → als `Access Token` eintragen.
+3. Im angezeigten Text `"access_token": "..."` suchen -- **der Name kommt mehrfach vor** (z. B. noch einmal verschachtelt in einem `weave`-Bereich). Das richtige Feld ist das **erste/oberste**, ganz am Anfang der Seite. Nur den Wert zwischen den Anführungszeichen kopieren → als `Access Token` eintragen. Zur Kontrolle: der richtige Wert beginnt mit `b` und ist deutlich kürzer als 100 Zeichen -- ein Wert, der nicht mit `b` beginnt oder sehr lang ist (200+ Zeichen, endet oft auf `=`), ist das falsche, verschachtelte Feld.
 4. **Nicht** bei home.nest.com ausloggen -- das macht den Token sofort ungültig. Einfach den Tab schließen.
 
 **Google-Konto (zu Google migriert):**
