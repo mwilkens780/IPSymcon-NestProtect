@@ -18,6 +18,7 @@ class NestAccount extends IPSModule
 
         $this->RegisterPropertyString('issue_token', '');
         $this->RegisterPropertyString('cookies', '');
+        $this->RegisterPropertyString('access_token', '');
         $this->RegisterPropertyInteger('update_interval', 300);
 
         $this->RegisterAttributeString('NestAccessToken', '');
@@ -33,7 +34,9 @@ class NestAccount extends IPSModule
     {
         parent::ApplyChanges();
 
-        if ($this->ReadPropertyString('issue_token') === '' || $this->ReadPropertyString('cookies') === '') {
+        $hasLegacyCreds = $this->ReadPropertyString('access_token') !== '';
+        $hasGoogleCreds = $this->ReadPropertyString('issue_token') !== '' && $this->ReadPropertyString('cookies') !== '';
+        if (!$hasLegacyCreds && !$hasGoogleCreds) {
             $this->SetStatus(201);
             $this->SetTimerInterval('UpdateTimer', 0);
             return;
@@ -68,7 +71,7 @@ class NestAccount extends IPSModule
     {
         $this->WriteAttributeInteger('NestExpiresAt', 0); // force a fresh handshake, not a cached one
         if (!$this->ensureSession()) {
-            return $this->Translate('Anmeldung fehlgeschlagen -- Details im IPS-Log. issue_token/cookies vermutlich abgelaufen.');
+            return $this->Translate('Anmeldung fehlgeschlagen -- Details im IPS-Log. Zugangsdaten vermutlich abgelaufen.');
         }
         if (!$this->fetchBuckets()) {
             return $this->Translate('Anmeldung erfolgreich, aber Geräteabfrage fehlgeschlagen -- Details im IPS-Log.');
@@ -97,13 +100,40 @@ class NestAccount extends IPSModule
     }
 
     /**
-     * Three-step handshake matching the undocumented Nest web-app login:
-     * 1) exchange the account's cookies for a short-lived Google OAuth token,
-     * 2) exchange that for a Nest JWT,
-     * 3) exchange the JWT for a Nest session (access_token + userid), which
-     * is what actually authorizes the device-data endpoint.
+     * Two account types share the same downstream /session + app_launch
+     * calls, they only differ in how the Nest access_token is obtained:
+     * legacy (never migrated to a Google account) accounts already have a
+     * long-lived Nest access_token the user can copy straight from the
+     * browser, while Google-linked accounts need the cookie -> Google
+     * token -> Nest JWT detour first to arrive at the same kind of token.
      */
     private function authenticate(): bool
+    {
+        $legacyToken = $this->ReadPropertyString('access_token');
+        if ($legacyToken !== '') {
+            return $this->authenticateLegacy($legacyToken);
+        }
+        return $this->authenticateGoogle();
+    }
+
+    /** Legacy (non-Google) Nest account: the user's own access_token authorizes /session directly. */
+    private function authenticateLegacy(string $token): bool
+    {
+        $resp = $this->httpRequest('https://home.nest.com/session', 'GET', [
+            'Authorization: Basic ' . $token,
+        ]);
+        $session = json_decode($resp['body'], true);
+        if ($resp['status'] !== 200 || !isset($session['access_token'], $session['userid'])) {
+            $this->LogMessage('NestAccount: Legacy-Session-Anfrage fehlgeschlagen (HTTP ' . $resp['status'] . ') -- access_token vermutlich abgelaufen, bitte im Browser neu aus home.nest.com holen.', KL_ERROR);
+            $this->SetStatus(201);
+            return false;
+        }
+        $this->storeSession($session);
+        return true;
+    }
+
+    /** Google-linked Nest account: cookies -> Google OAuth token -> Nest JWT -> /session. */
+    private function authenticateGoogle(): bool
     {
         $issueToken = $this->ReadPropertyString('issue_token');
         $cookies    = $this->ReadPropertyString('cookies');
@@ -153,12 +183,19 @@ class NestAccount extends IPSModule
             return false;
         }
 
+        $this->storeSession($session);
+        return true;
+    }
+
+    private function storeSession(array $session): void
+    {
         $this->WriteAttributeString('NestAccessToken', (string) $session['access_token']);
         $this->WriteAttributeString('NestUserId', (string) $session['userid']);
 
         // Nest's own "expires_in" here is an absolute expiry date string, not
         // a duration -- fall back to a conservative ~55 minutes if it can't
-        // be parsed, matching the 3600s lifetime requested from the JWT step.
+        // be parsed (legacy tokens are typically valid for ~30 days, so this
+        // fallback just means slightly more frequent re-checks, not a bug).
         $expiresAt = 0;
         if (isset($session['expires_in'])) {
             $parsed = strtotime((string) $session['expires_in']);
@@ -170,8 +207,6 @@ class NestAccount extends IPSModule
             $expiresAt = time() + 3300;
         }
         $this->WriteAttributeInteger('NestExpiresAt', $expiresAt);
-
-        return true;
     }
 
     /** Polls the current device data and caches the Nest Protect ("topaz.*") buckets. */

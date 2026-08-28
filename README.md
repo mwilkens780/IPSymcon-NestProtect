@@ -15,18 +15,23 @@ https://github.com/mwilkens780/IPSymcon-NestProtect
 
 ### 1. Nest-Konto-Instanz anlegen
 
-Eine **NestAccount**-Instanz anlegen (eine pro Google/Nest-Konto). Sie braucht `issue_token` und `cookies`, die einmalig manuell aus dem Browser geholt werden müssen:
+Eine **NestAccount**-Instanz anlegen (eine pro Nest-Konto). Je nachdem, ob das Konto zu einem Google-Konto migriert wurde oder nicht, nur **einen** der beiden folgenden Wege nutzen -- beide brauchen einmalig manuell aus dem Browser geholte Zugangsdaten. In beiden Fällen: Entwicklertools des Browsers öffnen (Chrome/Edge: Taste **F12**), Reiter **"Network"/"Netzwerk"**, Checkbox **"Preserve log"/"Log beibehalten"** anhaken (sonst verschwindet die gesuchte Anfrage bei der Weiterleitung während des Logins), dann erst einloggen.
 
-1. Im Browser auf [home.nest.com](https://home.nest.com) einloggen.
-2. Entwicklertools öffnen → Netzwerk-Tab → nach `issue_token` filtern.
-3. Seite neu laden.
-4. Die gefundene Anfrage an `accounts.google.com` öffnen:
+**Legacy-Konto (nicht zu Google migriert):**
+1. Auf [home.nest.com](https://home.nest.com) mit dem Nest-Konto einloggen (nicht über Google).
+2. Im Netzwerk-Tab nach `session` filtern.
+3. Bei der Anfrage an `home.nest.com/session` im **Antwort-Body (Response)** das Feld `access_token` kopieren → als `Access Token` eintragen.
+
+**Google-Konto (zu Google migriert):**
+1. Auf [home.nest.com](https://home.nest.com) einloggen.
+2. Im Netzwerk-Tab nach `issue_token` filtern.
+3. Die gefundene Anfrage an `accounts.google.com` öffnen:
    - Die **komplette Anfrage-URL** kopieren → als `Issue Token` eintragen.
    - Den Wert des Anfrage-Headers `cookie` kopieren → als `Cookies` eintragen.
 
 Danach über den Button "Verbindung testen / Geräte auflisten" prüfen, ob die Anmeldung funktioniert -- die gefundenen Geräte werden dort mit Seriennummer und Modell aufgelistet.
 
-Die Anmeldung bleibt gültig, bis man sich im Browser ausloggt oder das Passwort ändert -- dann müssen `issue_token`/`cookies` hier neu eingetragen werden.
+Die Zugangsdaten bleiben gültig, bis man sich im Browser ausloggt oder das Passwort ändert -- dann müssen sie hier neu eingetragen werden.
 
 ### 2. Eine NestProtect-Instanz pro Melder anlegen
 

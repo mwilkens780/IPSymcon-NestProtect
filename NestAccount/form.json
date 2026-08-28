@@ -2,21 +2,44 @@
   "elements": [
     {
       "type": "Label",
-      "caption": "Google bietet fuer Nest Protect keine offizielle API an. Diese Instanz nutzt die gleiche inoffizielle, Cookie-basierte Anmeldung wie die bekannten Home-Assistant-Projekte (ha-nest-protect / nest_legacy)."
+      "caption": "Google bietet fuer Nest Protect keine offizielle API an. Diese Instanz nutzt die gleiche inoffizielle Anmeldung wie die bekannten Home-Assistant-Projekte (ha-nest-protect / nest_legacy). Je nachdem, ob Dein Nest-Konto zu einem Google-Konto migriert wurde oder nicht, nur EINEN der beiden folgenden Bereiche ausfuellen."
     },
     {
-      "type": "Label",
-      "caption": "So kommst Du an issue_token und cookies: Im Browser auf home.nest.com einloggen -> Entwicklertools -> Netzwerk-Tab -> nach 'issue_token' filtern -> Seite neu laden. Bei der gefundenen Anfrage (an accounts.google.com) die komplette Anfrage-URL als 'Issue Token' unten eintragen, und den Wert des Anfrage-Headers 'cookie' als 'Cookies'."
+      "type": "ExpansionPanel",
+      "caption": "Legacy Nest-Konto (nicht zu Google migriert)",
+      "expanded": true,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Im Browser auf home.nest.com mit dem Nest-Konto einloggen (NICHT ueber Google) -> Entwicklertools (F12) -> Netzwerk-Tab -> 'Preserve log' anhaken -> nach 'session' filtern -> Seite neu laden bzw. einloggen. Bei der Anfrage an home.nest.com/session im Antwort-Body (Response) das Feld 'access_token' kopieren."
+        },
+        {
+          "type": "PasswordTextBox",
+          "name": "access_token",
+          "caption": "Access Token"
+        }
+      ]
     },
     {
-      "type": "PasswordTextBox",
-      "name": "issue_token",
-      "caption": "Issue Token (komplette URL)"
-    },
-    {
-      "type": "PasswordTextBox",
-      "name": "cookies",
-      "caption": "Cookies"
+      "type": "ExpansionPanel",
+      "caption": "Google-Konto (zu Google migriert)",
+      "expanded": false,
+      "items": [
+        {
+          "type": "Label",
+          "caption": "Im Browser auf home.nest.com einloggen -> Entwicklertools (F12) -> Netzwerk-Tab -> 'Preserve log' anhaken -> nach 'issue_token' filtern -> Seite neu laden. Bei der gefundenen Anfrage (an accounts.google.com) die komplette Anfrage-URL als 'Issue Token' eintragen, und den Wert des Anfrage-Headers 'cookie' als 'Cookies'."
+        },
+        {
+          "type": "PasswordTextBox",
+          "name": "issue_token",
+          "caption": "Issue Token (komplette URL)"
+        },
+        {
+          "type": "PasswordTextBox",
+          "name": "cookies",
+          "caption": "Cookies"
+        }
+      ]
     },
     {
       "type": "NumberSpinner",
@@ -27,7 +50,7 @@
     },
     {
       "type": "Label",
-      "caption": "Bleibt gueltig, bis Du Dich im Browser ausloggst oder das Passwort aenderst -- dann muessen issue_token/cookies hier neu eingetragen werden."
+      "caption": "Die Zugangsdaten bleiben gueltig, bis Du Dich im Browser ausloggst oder das Passwort aenderst -- dann muessen sie hier neu eingetragen werden."
     }
   ],
   "actions": [
